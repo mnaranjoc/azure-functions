@@ -15,8 +15,11 @@ public class OnUserRegisterWriteToQueue
     }
 
     [Function("OnUserRegisterWriteToQueue")]
-    public IActionResult Run([HttpTrigger(AuthorizationLevel.Anonymous, "get", "post")] HttpRequest req)
+    public async Task<IActionResult> Run([HttpTrigger(AuthorizationLevel.Anonymous, "get", "post")] HttpRequest req)
     {
+        string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
+        _logger.LogInformation(requestBody);
+
         _logger.LogInformation("C# HTTP trigger function processed a request.");
         return new OkObjectResult("Welcome to Azure Functions!");
     }
