@@ -17,6 +17,6 @@ public class OnQueueTriggerUpdateDatabase
     [Function(nameof(OnQueueTriggerUpdateDatabase))]
     public void Run([QueueTrigger("AzureQueueTest", Connection = "")] QueueMessage message)
     {
-        _logger.LogInformation("C# Queue trigger function processed: {messageText}", message.MessageText);
+        _logger.LogInformation("------------Queue message received------------- {messageText}", message.MessageText);
     }
 }
