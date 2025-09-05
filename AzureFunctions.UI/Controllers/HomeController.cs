@@ -1,3 +1,5 @@
+using Azure.Storage.Blobs;
+using Azure.Storage.Blobs.Models;
 using AzureFunctions.UI.Models;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
@@ -9,11 +11,13 @@ namespace AzureFunctions.UI.Controllers
     {
         private readonly ILogger<HomeController> _logger;
         private readonly IHttpClientFactory _httpClientFactory;
+        private readonly BlobServiceClient _blobServiceClient;
 
-        public HomeController(ILogger<HomeController> logger, IHttpClientFactory httpClientFactory)
+        public HomeController(ILogger<HomeController> logger, IHttpClientFactory httpClientFactory, BlobServiceClient blobServiceClient)
         {
             _logger = logger;
             _httpClientFactory = httpClientFactory;
+            _blobServiceClient = blobServiceClient;
         }
 
         public IActionResult Index()
@@ -22,12 +26,25 @@ namespace AzureFunctions.UI.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Index(UserModel model)
+        public async Task<IActionResult> Index(UserModel model, IFormFile photo)
         {
             using var httpClient = _httpClientFactory.CreateClient();
             httpClient.BaseAddress = new Uri("http://localhost:7060/api/");
             var content = new StringContent(JsonConvert.SerializeObject(model));
-            await httpClient.PostAsync("OnUserRegisterWriteToQueue", content);
+            var response = await httpClient.PostAsync("OnUserRegisterWriteToQueue", content);
+
+            if (response.IsSuccessStatusCode && photo != null)
+            {
+                var fileName = $"{model.Name}-{Guid.NewGuid()}{Path.GetExtension(photo.FileName)}";
+                var blobContainerClient = _blobServiceClient.GetBlobContainerClient("user-images");
+                var blobClient = blobContainerClient.GetBlobClient(fileName);
+
+                var httpHeaders = new BlobHttpHeaders()
+                {
+                    ContentType = photo.ContentType
+                };
+                var result = await blobClient.UploadAsync(photo.OpenReadStream(), httpHeaders);
+            }
 
             return RedirectToAction("Index");
         }

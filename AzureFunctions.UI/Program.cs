@@ -1,3 +1,5 @@
+using Azure.Storage.Blobs;
+
 namespace AzureFunctions.UI
 {
     public class Program
@@ -9,6 +11,7 @@ namespace AzureFunctions.UI
             // Add services to the container.
             builder.Services.AddControllersWithViews();
             builder.Services.AddHttpClient();
+            builder.Services.AddSingleton(u => new BlobServiceClient(builder.Configuration.GetValue<string>("StorageConnection")));
 
             var app = builder.Build();
 
